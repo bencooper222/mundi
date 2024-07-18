@@ -1,0 +1,3 @@
+[submodule "submodules/s2"]
+	path = submodules/s2
+	url = git@github.com:google/s2geometry.git
