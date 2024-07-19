@@ -1,6 +1,11 @@
 FROM silkeh/clang:18-bookworm as builder
 
-RUN apt-get update && apt-get install -y cmake libssl-dev curl unzip
+
+WORKDIR /mundi
+COPY submodules/ ./submodules 
+
+
+RUN apt-get update && apt-get install -y cmake openssl libssl-dev curl unzip
 
 ARG EMSCRIPTEN_VERSION=3.1.63
 RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/refs/tags/${EMSCRIPTEN_VERSION}.zip && \
@@ -8,19 +13,15 @@ RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/ref
     mv emsdk-${EMSCRIPTEN_VERSION} emsdk && \
     cd emsdk && \
     ./emsdk install ${EMSCRIPTEN_VERSION} && \
-    ./emsdk activate ${EMSCRIPTEN_VERSION} && \
-    # sh, not bash :(
-    . ./emsdk_env.sh # 
+    ./emsdk activate ${EMSCRIPTEN_VERSION}
 
-WORKDIR /mundi
-
-COPY submodules/ ./submodules 
 COPY .gitmodules ./
 COPY CMakeLists.txt main.cc ./
 
 WORKDIR /mundi/build
-RUN cmake ..
-WORKDIR /mundi
 
-RUN cmake --build build  --target your_program
-RUN ./build/your_program
+# RUN . ../emsdk/emsdk_env.sh && emcmake cmake ..
+# WORKDIR /mundi
+
+# RUN cmake --build build  --target your_program
+# RUN ./build/your_program
