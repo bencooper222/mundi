@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(mundi)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -10,6 +10,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 # Add Abseil library
 set(ABSL_ENABLE_INSTALL ON)
@@ -19,7 +21,7 @@ add_subdirectory(submodules/abseil)
 set(absl_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil")
 
 # Add S2 library
-set(BUILD_TESTS OFF)  # This prevents S2 from building its own tests
+set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 add_subdirectory(submodules/s2)
 
 
