@@ -1,3 +1,6 @@
 [submodule "submodules/s2"]
 	path = submodules/s2
 	url = git@github.com:google/s2geometry.git
+[submodule "submodules/abseil"]
+	path = submodules/abseil
+	url = git@github.com:abseil/abseil-cpp.git
