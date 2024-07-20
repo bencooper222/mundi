@@ -12,6 +12,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(BUILD_SHARED_LIBS OFF)
+
 
 # Add Abseil library
 set(ABSL_ENABLE_INSTALL ON)
@@ -45,6 +47,7 @@ add_subdirectory(submodules/s2)
 
 # Your executable
 add_executable(your_program main.cc)
+add_executable(dummy dummy.cc)
 
 
 # Link against S2 and Abseil

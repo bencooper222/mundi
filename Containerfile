@@ -16,7 +16,7 @@ RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/ref
     ./emsdk activate ${EMSCRIPTEN_VERSION}
 
 COPY .gitmodules ./
-COPY CMakeLists.txt main.cc ./
+COPY CMakeLists.txt main.cc dummy.cc ./
 
 WORKDIR /mundi/build
 
