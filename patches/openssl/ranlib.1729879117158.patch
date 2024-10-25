@@ -1,0 +1,15 @@
+# Needed for running with emscripten's path concatenation
+
+diff --git a/Configurations/unix-Makefile.tmpl b/Configurations/unix-Makefile.tmpl
+index 09303c42df..603e64ee8b 100644
+--- a/Configurations/unix-Makefile.tmpl
++++ b/Configurations/unix-Makefile.tmpl
+@@ -381,7 +381,7 @@ PERL={- $config{PERL} -}
+ 
+ AR=$(CROSS_COMPILE){- $config{AR} -}
+ ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
+-RANLIB={- $config{RANLIB} ? "\$(CROSS_COMPILE)$config{RANLIB}" : "true"; -}
++RANLIB={- $config{RANLIB} ? "$config{RANLIB}" : "true"; -}
+ RC= $(CROSS_COMPILE){- $config{RC} -}
+ RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -} {- $target{shared_rcflag} -}
+ 

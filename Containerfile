@@ -12,7 +12,13 @@ RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/ref
     ./emsdk install ${EMSCRIPTEN_VERSION} && \
     ./emsdk activate ${EMSCRIPTEN_VERSION}
 
-COPY submodules/ ./submodules 
+COPY submodules/ ./submodules
+COPY patches/ ./patches
+
+# TODO: if there's more patches, make this a script that traverses the patches directory.
+RUN cd submodules/openssl && git apply patches/openssl/ranlib.1729879117158.patch
+
+
 COPY .gitmodules ./
 COPY CMakeLists.txt main.cc dummy.cc ./
 
