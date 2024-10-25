@@ -18,6 +18,7 @@ set(BUILD_TESTS OFF)
 
 # Add Abseil library
 set(ABSL_ENABLE_INSTALL ON)
+set(ABSL_PROPAGATE_CXX_STD ON)
 add_subdirectory(submodules/abseil)
 
 # Set the absl directory
@@ -95,15 +96,26 @@ add_subdirectory(submodules/s2)
 
 # Your executable
 add_executable(your_program main.cc)
-add_executable(dummy dummy.cc)
 
 
 # Link against S2 and Abseil
-target_link_libraries(your_program s2 absl::base)
+target_link_libraries(your_program 
+s2 
+absl::base 
+absl::strings 
+absl::log
+${OPENSSL_CRYPTO_LIBRARY}
+${OPENSSL_SSL_LIBRARY}
+)
+
 
 # Include directories
 target_include_directories(your_program PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/s2/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil
+    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/s2/src/s2
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil/absl/base
+    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil/absl/strings
+    ${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil/absl/log
+
     ${OPENSSL_INCLUDE_DIR}
 )
