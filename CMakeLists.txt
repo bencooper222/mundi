@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(BUILD_SHARED_LIBS OFF)
+set(BUILD_TESTS OFF)
 
 
 # Add Abseil library
@@ -23,21 +24,34 @@ add_subdirectory(submodules/abseil)
 set(absl_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil")
 
 
-# S2 needs openssl
-set(OPENSSL_ROOT_DIR "/usr")
-set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
-set(OPENSSL_CRYPTO_LIBRARY "/usr/lib/x86_64-linux-gnu/libcrypto.so")
-set(OPENSSL_SSL_LIBRARY "/usr/lib/x86_64-linux-gnu/libssl.so")
 
-# Find the OpenSSL package
-find_package(OpenSSL REQUIRED)
+include(ExternalProject)
 
-if (OpenSSL_FOUND)
-    message(STATUS "Found OpenSSL: ${OPENSSL_VERSION}")
-    include_directories(${OPENSSL_INCLUDE_DIR})
-else()
-    message(FATAL_ERROR "OpenSSL not found!")
-endif()
+set(OPENSSL_BUILD_DIR ${CMAKE_BINARY_DIR}/openssl)
+set(OPENSSL_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/openssl/install)
+
+ExternalProject_Add(openssl_build
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/openssl
+    BINARY_DIR ${OPENSSL_BUILD_DIR}
+    CONFIGURE_COMMAND emconfigure ${CMAKE_CURRENT_SOURCE_DIR}/submodules/openssl/Configure 
+        --prefix=${OPENSSL_INSTALL_PREFIX}
+        --openssldir=${OPENSSL_INSTALL_PREFIX}
+        no-shared
+        no-asm
+        no-threads
+        no-engine
+        no-hw
+        no-weak-ssl-ciphers
+        linux-generic32
+    BUILD_COMMAND emmake make -j4
+    INSTALL_COMMAND emmake make install_sw
+)
+
+# Set OpenSSL directories after build
+set(OPENSSL_ROOT_DIR ${OPENSSL_INSTALL_PREFIX})
+set(OPENSSL_INCLUDE_DIR ${OPENSSL_INSTALL_PREFIX}/include)
+set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_INSTALL_PREFIX}/lib/libcrypto.a)
+set(OPENSSL_SSL_LIBRARY ${OPENSSL_INSTALL_PREFIX}/lib/libssl.a)
 
 
 # Add S2 library

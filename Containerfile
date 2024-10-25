@@ -6,7 +6,7 @@ COPY submodules/ ./submodules
 COPY .gitmodules ./
 
 
-RUN apt-get update && apt-get install -y cmake openssl libssl-dev curl unzip
+RUN apt-get update && apt-get install -y cmake curl unzip
 
 ARG EMSCRIPTEN_VERSION=3.1.63
 RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/refs/tags/${EMSCRIPTEN_VERSION}.zip && \
