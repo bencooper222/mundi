@@ -1,12 +1,9 @@
 [submodule "submodules/s2"]
 	path = submodules/s2
 	url = git@github.com:google/s2geometry.git
-	ignore = dirty
 [submodule "submodules/abseil"]
 	path = submodules/abseil
 	url = git@github.com:abseil/abseil-cpp.git
-	ignore = dirty
 [submodule "submodules/openssl"]
 	path = submodules/openssl
 	url = https://github.com/openssl/openssl.git
-	ignore = dirty
