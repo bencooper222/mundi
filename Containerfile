@@ -20,7 +20,7 @@ RUN cd /mundi/submodules/openssl && patch -p1 /mundi/patches/openssl/ranlib.1729
 
 
 COPY .gitmodules ./
-COPY CMakeLists.txt main.cc dummy.cc ./
+COPY CMakeLists.txt main.cc ./
 
 WORKDIR /mundi/build
 
