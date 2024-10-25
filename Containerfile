@@ -1,10 +1,6 @@
 FROM silkeh/clang:18-bookworm as builder
 
-
 WORKDIR /mundi
-COPY submodules/ ./submodules 
-COPY .gitmodules ./
-
 
 RUN apt-get update && apt-get install -y cmake curl unzip
 
@@ -16,6 +12,8 @@ RUN curl -Lo emscripten.zip https://github.com/emscripten-core/emsdk/archive/ref
     ./emsdk install ${EMSCRIPTEN_VERSION} && \
     ./emsdk activate ${EMSCRIPTEN_VERSION}
 
+COPY submodules/ ./submodules 
+COPY .gitmodules ./
 COPY CMakeLists.txt main.cc dummy.cc ./
 
 WORKDIR /mundi/build
