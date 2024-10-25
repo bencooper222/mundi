@@ -24,6 +24,31 @@ add_subdirectory(submodules/abseil)
 set(absl_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil")
 
 
+# Find emar path
+
+
+
+if(EMSCRIPTEN)
+    set(EMSCRIPTEN_ROOT_PATH $ENV{EMSDK}/upstream/emscripten)
+    
+    # Update PATH handling
+    find_program(EMAR_PATH emar 
+        PATHS ${EMSCRIPTEN_ROOT_PATH}
+        PATH_SUFFIXES bin em
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    
+    find_program(EMRANLIB_PATH emranlib
+        PATHS ${EMSCRIPTEN_ROOT_PATH}
+        PATH_SUFFIXES bin em
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    
+    # Set the cross-compilation prefix
+    set(CROSS_COMPILE_PREFIX ${EMSCRIPTEN_ROOT_PATH}/em)
+endif()
 
 include(ExternalProject)
 
@@ -33,18 +58,27 @@ set(OPENSSL_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/openssl/install)
 ExternalProject_Add(openssl_build
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/openssl
     BINARY_DIR ${OPENSSL_BUILD_DIR}
-    CONFIGURE_COMMAND emconfigure ${CMAKE_CURRENT_SOURCE_DIR}/submodules/openssl/Configure 
+    CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/submodules/openssl/Configure 
         --prefix=${OPENSSL_INSTALL_PREFIX}
         --openssldir=${OPENSSL_INSTALL_PREFIX}
         no-shared
         no-asm
         no-threads
         no-engine
-        no-hw
         no-weak-ssl-ciphers
+        no-dso
+        no-dgram
+        no-sock
         linux-generic32
-    BUILD_COMMAND emmake make -j4
-    INSTALL_COMMAND emmake make install_sw
+    BUILD_COMMAND make 
+      CC=emcc
+      CXX=em++
+      AR=${EMAR_PATH}
+      RANLIB=${EMRANLIB_PATH}
+      CROSS_COMPILE=${EMSCRIPTEN_ROOT_PATH}/em
+    INSTALL_COMMAND make install_sw
+    BUILD_IN_SOURCE 0
+
 )
 
 # Set OpenSSL directories after build
