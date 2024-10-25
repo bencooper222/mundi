@@ -18,7 +18,8 @@ COPY CMakeLists.txt main.cc dummy.cc ./
 
 WORKDIR /mundi/build
 
-RUN  cd ../emsdk && . ./emsdk_env.sh && cd ../build && emcmake cmake ..
+RUN cd ../emsdk && . ./emsdk_env.sh && cd ../build && emcmake cmake ..
+RUN cd ../emsdk && . ./emsdk_env.sh && cd ../build && emmake make
 # WORKDIR /mundi
 
 # RUN cmake --build build  --target your_program
