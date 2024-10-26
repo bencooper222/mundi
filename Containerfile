@@ -16,7 +16,7 @@ COPY submodules/ ./submodules
 COPY patches/ ./patches
 
 # TODO: if there's more patches, make this a script that traverses the patches directory.
-RUN cd /mundi/submodules/openssl && patch -p1 /mundi/patches/openssl/ranlib.1729879117158.patch
+RUN cd /mundi/submodules/openssl && patch -p1 </mundi/patches/openssl/ranlib.1729879117158.patch
 
 
 COPY .gitmodules ./
@@ -26,7 +26,3 @@ WORKDIR /mundi/build
 
 RUN cd ../emsdk && . ./emsdk_env.sh && cd ../build && emcmake cmake ..
 RUN cd ../emsdk && . ./emsdk_env.sh && cd ../build && emmake make
-# WORKDIR /mundi
-
-# RUN cmake --build build  --target your_program
-# RUN ./build/your_program
