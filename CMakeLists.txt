@@ -95,11 +95,12 @@ add_subdirectory(submodules/s2)
 
 
 # Your executable
-add_executable(your_program main.cc)
+add_executable(s2_library main.cc)
+set_target_properties(s2_library PROPERTIES LINK_FLAGS "--bind -s ERROR_ON_UNDEFINED_SYMBOLS=0 -O3")
 
 
 # Link against S2 and Abseil
-target_link_libraries(your_program 
+target_link_libraries(s2_library 
 s2 
 absl::base 
 absl::strings 
@@ -110,7 +111,7 @@ ${OPENSSL_SSL_LIBRARY}
 
 
 # Include directories
-target_include_directories(your_program PRIVATE
+target_include_directories(s2_library PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/submodules/s2/src/s2
 
     ${CMAKE_CURRENT_SOURCE_DIR}/submodules/abseil/absl/base
