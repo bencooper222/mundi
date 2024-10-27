@@ -45,15 +45,15 @@ S2CellInfo GetCellInfo(const std::string token)
 
 EMSCRIPTEN_BINDINGS(get_cell_info)
 {
-    class_<LatLng>("LatLng")
-        .property("lat", &LatLng::lat)
-        .property("lng", &LatLng::lng);
+    value_object<LatLng>("LatLng")
+        .field("lat", &LatLng::lat)
+        .field("lng", &LatLng::lng);
 
-    class_<S2CellInfo>("S2CellInfo")
-        .property("id", &S2CellInfo::id)
-        .property("low", &S2CellInfo::low)
-        .property("high", &S2CellInfo::high)
-        .property("approximate_area", &S2CellInfo::approximate_area);
+    value_object<S2CellInfo>("S2CellInfo")
+        .field("id", &S2CellInfo::id)
+        .field("low", &S2CellInfo::low)
+        .field("high", &S2CellInfo::high)
+        .field("approximateArea", &S2CellInfo::approximate_area);
 
     function("GetCellInfo", &GetCellInfo);
 }
