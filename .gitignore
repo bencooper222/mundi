@@ -1,3 +1,2 @@
-build/
-CMakeFiles/
-lib/
+node_modules
+dist
