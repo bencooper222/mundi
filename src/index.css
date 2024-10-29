@@ -24,7 +24,7 @@ input[type='text'] {
   outline: none;
   padding: 8px;
   width: 90%;
-  font-size: 8vw;
+  font-size: min(64px, 8vw);
 }
 
 #cell-info {
