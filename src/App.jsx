@@ -1,10 +1,9 @@
-import styles from './App.module.css';
 import s2WasmModulePromise from './wasm/s2_library';
-import { createSignal, Show, createEffect } from 'solid-js';
+import { createSignal, Switch, Match, createEffect } from 'solid-js';
 
 const numFormatter = new Intl.NumberFormat();
 const steradiansToDisplayArea = (steradians) => {
-  const EARTH_RADIUS_METERS = 6_371_000;
+  const EARTH_RADIUS_METERS = 6_378_137;
   const metersSquaredArea = steradians * EARTH_RADIUS_METERS ** 2;
 
   if (metersSquaredArea > 1_000_000) {
@@ -16,56 +15,80 @@ const steradiansToDisplayArea = (steradians) => {
 };
 
 const latLngFormatter = (lat, lng) => {
-  const precision = 4;
-  return `${lat.toFixed(precision)}, ${lng.toFixed(precision)}`;
+  const PRECISION = 4;
+  return `${lat.toFixed(PRECISION)}, ${lng.toFixed(PRECISION)}`;
 };
 
 function Field(props) {
   return (
-    <div>
-      <span>{props.label}:</span> {props.value}
+    <div class="label">
+      <span>{props.label}:</span> <strong>{props.value}</strong>
     </div>
   );
 }
 
 function CellInfo(props) {
+  console.log('hi', props);
   return (
-    <Show when={props.cellInfoOutput != undefined}>
-      <div>
-        <Field label="Cell ID" value={props.cellInfoOutput.id} />
-        <Field label="Zoom Level" value={props.zoomLevel}></Field>
-        <Field
-          label="Low LatLng"
-          value={latLngFormatter(
-            props.cellInfoOutput.low.lat,
-            props.cellInfoOutput.low.lng,
-          )}
-        />
+    <div id="cell-info">
+      <Switch>
+        <Match
+          when={props.cellInfoOutput != undefined && props.cellInfoOutput.error}
+        >
+          <div class="label">❌ Invalid Cell ID</div>
+        </Match>
+        <Match
+          when={
+            props.cellInfoOutput != undefined && !props.cellInfoOutput.error
+          }
+        >
+          <button
+            on:click={navigator.clipboard.writeText(
+              JSON.stringify(props.cellInfoOutput.value, null, 2),
+            )}
+          >
+            Copy JSON
+          </button>
+          <Field label="Cell ID" value={props.cellInfoOutput.value.id} />
+          <Field
+            label="Zoom Level"
+            value={props.cellInfoOutput.value.zoomLevel}
+          ></Field>
+          <Field
+            label="Low LatLng"
+            value={latLngFormatter(
+              props.cellInfoOutput.value.low.lat,
+              props.cellInfoOutput.value.low.lng,
+            )}
+          />
 
-        <Field
-          label="High LatLng"
-          value={latLngFormatter(
-            props.cellInfoOutput.high.lat,
-            props.cellInfoOutput.high.lng,
-          )}
-        />
+          <Field
+            label="High LatLng"
+            value={latLngFormatter(
+              props.cellInfoOutput.value.high.lat,
+              props.cellInfoOutput.value.high.lng,
+            )}
+          />
 
-        <Field
-          label="Approximate Area"
-          value={steradiansToDisplayArea(props.cellInfoOutput.approximateArea)}
-        />
-      </div>
-    </Show>
+          <Field
+            label="Approximate Area"
+            value={steradiansToDisplayArea(
+              props.cellInfoOutput.value.approximateArea,
+            )}
+          />
+        </Match>
+      </Switch>
+    </div>
   );
 }
 
 const calculateCellInfo = (s2Module, cellId) => {
   if (!s2Module || !cellId) return null;
   try {
-    return s2Module.GetCellInfo(cellId);
+    return { error: false, value: s2Module.GetCellInfo(cellId) };
   } catch (error) {
     console.error('Error processing cell ID:', error);
-    return null;
+    return { error: true };
   }
 };
 
@@ -85,7 +108,7 @@ function App() {
   });
 
   return (
-    <div class={styles.App}>
+    <div>
       <input
         type="text"
         value={inputCellId()}

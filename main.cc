@@ -40,7 +40,6 @@ S2CellInfo GetCellInfo(const std::string token)
     cell_info.high.lng = hi_bounds.lng().degrees();
 
     cell_info.approximate_area = cell.ApproxArea();
-
     cell_info.zoom_level = cell.level(); 
 
     return cell_info;
