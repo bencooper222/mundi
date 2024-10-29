@@ -96,7 +96,7 @@ add_subdirectory(submodules/s2)
 
 # Your executable
 add_executable(s2_library main.cc)
-set_target_properties(s2_library PROPERTIES LINK_FLAGS "--bind -s ERROR_ON_UNDEFINED_SYMBOLS=0 -O3")
+set_target_properties(s2_library PROPERTIES LINK_FLAGS "--bind -O3  -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s SINGLE_FILE=1 -s MODULARIZE=1 -s EXPORT_ES6=1")
 
 
 # Link against S2 and Abseil
