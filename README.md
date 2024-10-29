@@ -2,7 +2,7 @@
 
 ## WASM
 
-`podman build .`
+`git submodule update --init --recursive && podman build .`
 
 Will take a long time. Probably works with docker too but I've never confirmed.
 
