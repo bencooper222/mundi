@@ -19,6 +19,7 @@ struct S2CellInfo
     LatLng low;
     LatLng high;
     double approximate_area;
+    int zoom_level;
 };
 
 S2CellInfo GetCellInfo(const std::string token)
@@ -40,6 +41,8 @@ S2CellInfo GetCellInfo(const std::string token)
 
     cell_info.approximate_area = cell.ApproxArea();
 
+    cell_info.zoom_level = cell.level(); 
+
     return cell_info;
 }
 
@@ -53,7 +56,8 @@ EMSCRIPTEN_BINDINGS(get_cell_info)
         .field("id", &S2CellInfo::id)
         .field("low", &S2CellInfo::low)
         .field("high", &S2CellInfo::high)
-        .field("approximateArea", &S2CellInfo::approximate_area);
+        .field("approximateArea", &S2CellInfo::approximate_area)
+        .field("zoomLevel", &S2CellInfo::zoom_level);
 
     function("GetCellInfo", &GetCellInfo);
 }
