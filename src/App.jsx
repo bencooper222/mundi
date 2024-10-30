@@ -33,9 +33,13 @@ function Field(props) {
   );
 }
 
+const geocodeMemoizer = {};
 const GeocodeComponent = (props) => {
-  console.log(props);
   const [locationStr] = createResource(async () => {
+    const memoizeKey = `${props.lat},${props.lng}`;
+    if (geocodeMemoizer[memoizeKey]) {
+      return geocodeMemoizer[memoizeKey];
+    }
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${props.lat}&lon=${props.lng}&format=json`;
     const response = await fetch(url);
 
@@ -44,10 +48,9 @@ const GeocodeComponent = (props) => {
     }
     const data = await response.json();
 
-    if (data.error) return 'Unknown';
-
     let locationStr = '';
-    if (data.address) {
+    if (data.error) locationStr = 'Unknown';
+    else if (data.address) {
       locationStr = `${data.address.city}, ${data.address.state}`;
 
       // The next block of code should be exclusively read whilst listening to the national anthem.
@@ -56,7 +59,7 @@ const GeocodeComponent = (props) => {
         locationStr += `, ${data.address.country}`;
       }
     }
-    console.log(locationStr);
+    geocodeMemoizer[memoizeKey] = locationStr;
     return locationStr;
   });
 
@@ -65,6 +68,10 @@ const GeocodeComponent = (props) => {
       <Field label={props.label} value={locationStr()} />
     </Suspense>
   );
+};
+
+const copyToClipboardHandler = (data) => {
+  navigator.clipboard.writeText(JSON.stringify(data, null, 2));
 };
 
 function CellInfo(props) {
@@ -80,9 +87,7 @@ function CellInfo(props) {
           when={props.cellInfoOutput != undefined && props.cellInfoOutput.ok}
         >
           <button
-            on:click={navigator.clipboard.writeText(
-              JSON.stringify(props.cellInfoOutput.value, null, 2),
-            )}
+            onclick={[copyToClipboardHandler, props.cellInfoOutput.value]}
           >
             Copy JSON
           </button>
