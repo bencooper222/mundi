@@ -33,7 +33,7 @@ function Field(props) {
   );
 }
 
-const geocodeMemoizer = {};
+const geocodeMemoizer = {}; // Probably could use useMemo or something.
 const GeocodeComponent = (props) => {
   const [locationStr] = createResource(async () => {
     const memoizeKey = `${props.lat},${props.lng}`;
