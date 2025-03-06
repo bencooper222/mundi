@@ -33,33 +33,35 @@ function Field(props) {
   );
 }
 
-const geocodeMemoizer = {};
+const geocodeMemoizer = {}; // Probably could use useMemo or something.
 const GeocodeComponent = (props) => {
   const [locationStr] = createResource(async () => {
     const memoizeKey = `${props.lat},${props.lng}`;
     if (geocodeMemoizer[memoizeKey]) {
+      props.onLocationUpdate?.(geocodeMemoizer[memoizeKey]);
       return geocodeMemoizer[memoizeKey];
     }
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${props.lat}&lon=${props.lng}&format=json`;
     const response = await fetch(url);
 
     if (!response.ok) {
+      props.onLocationUpdate?.(null);
       return null;
     }
     const data = await response.json();
 
     let locationStr = '';
-    if (data.error) locationStr = 'Unknown';
-    else if (data.address) {
+    if (data.error) {
+      locationStr = 'Unknown';
+    } else if (data.address) {
       locationStr = `${data.address.city}, ${data.address.state}`;
 
-      // The next block of code should be exclusively read whilst listening to the national anthem.
-      // Loudly reciting the Pledge of Allegiance will do in a pinch.
       if (data.address.country_code !== 'us') {
         locationStr += `, ${data.address.country}`;
       }
     }
     geocodeMemoizer[memoizeKey] = locationStr;
+    props.onLocationUpdate?.(locationStr);
     return locationStr;
   });
 
@@ -70,11 +72,18 @@ const GeocodeComponent = (props) => {
   );
 };
 
-const copyToClipboardHandler = (data) => {
-  navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+const copyToClipboardHandler = (data, locationStr) => {
+  // TODO: consider encoding the full Nominatim JSON response.
+  const dataToWrite = {
+    ...data,
+    reverseGeocode: locationStr ?? null,
+  };
+  navigator.clipboard.writeText(JSON.stringify(dataToWrite, null, 2));
 };
 
 function CellInfo(props) {
+  const [locationStr, setLocationStr] = createSignal(null);
+
   return (
     <div id="cell-info">
       <Switch>
@@ -87,7 +96,9 @@ function CellInfo(props) {
           when={props.cellInfoOutput != undefined && props.cellInfoOutput.ok}
         >
           <button
-            onclick={[copyToClipboardHandler, props.cellInfoOutput.value]}
+            onclick={() =>
+              copyToClipboardHandler(props.cellInfoOutput.value, locationStr())
+            }
           >
             Copy JSON
           </button>
@@ -130,6 +141,7 @@ function CellInfo(props) {
                 props.cellInfoOutput.value.high.lng) /
               2
             }
+            onLocationUpdate={setLocationStr}
           />
         </Match>
       </Switch>
