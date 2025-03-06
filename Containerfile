@@ -1,4 +1,4 @@
-FROM silkeh/clang:18-bookworm as builder
+FROM silkeh/clang:18-bookworm AS builder
 
 WORKDIR /mundi
 
