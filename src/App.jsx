@@ -35,35 +35,44 @@ function Field(props) {
 
 const geocodeMemoizer = {}; // Probably could use useMemo or something.
 const GeocodeComponent = (props) => {
-  const [locationStr] = createResource(async () => {
-    const memoizeKey = `${props.lat},${props.lng}`;
-    if (geocodeMemoizer[memoizeKey]) {
-      props.onLocationUpdate?.(geocodeMemoizer[memoizeKey]);
-      return geocodeMemoizer[memoizeKey];
-    }
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${props.lat}&lon=${props.lng}&format=json`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      props.onLocationUpdate?.(null);
-      return null;
-    }
-    const data = await response.json();
-
-    let locationStr = '';
-    if (data.error) {
-      locationStr = 'Unknown';
-    } else if (data.address) {
-      locationStr = `${data.address.city}, ${data.address.state}`;
-
-      if (data.address.country_code !== 'us') {
-        locationStr += `, ${data.address.country}`;
+  const [locationStr] = createResource(
+    () => `${props.lat},${props.lng}`,
+    async (coords) => {
+      const [lat, lng] = coords.split(',').map(Number);
+      const memoizeKey = coords;
+      if (geocodeMemoizer[memoizeKey]) {
+        props.onLocationUpdate?.(geocodeMemoizer[memoizeKey]);
+        return geocodeMemoizer[memoizeKey];
       }
-    }
-    geocodeMemoizer[memoizeKey] = locationStr;
-    props.onLocationUpdate?.(locationStr);
-    return locationStr;
-  });
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        props.onLocationUpdate?.(null);
+        return null;
+      }
+      const data = await response.json();
+      console.debug('Latlng', lat, lng, 'Response data', data);
+
+      let locationStr = '';
+      if (data.error) {
+        locationStr = 'Unknown';
+      } else if (data.address) {
+        const cityCounty = data.address.city ?? data.address.county ?? null;
+        locationStr =
+          cityCounty === null
+            ? data.address.state
+            : `${cityCounty}, ${data.address.state}`;
+
+        if (data.address.country_code !== 'us') {
+          locationStr += `, ${data.address.country}`;
+        }
+      }
+      geocodeMemoizer[memoizeKey] = locationStr;
+      props.onLocationUpdate?.(locationStr);
+      return locationStr;
+    },
+  );
 
   return (
     <Suspense fallback={<Field label={props.label} value="Loading..." />}>
@@ -163,6 +172,44 @@ function App() {
   const [s2WasmModule, sets2WasmModule] = createSignal(null);
   const [inputCellId, setInputCellId] = createSignal('');
   const [cellInfoOutput, setCellInfoOutput] = createSignal(null);
+
+  // Initialize from URL
+  createEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlCellId = params.get('cellId');
+    if (urlCellId && urlCellId !== inputCellId()) {
+      setInputCellId(urlCellId);
+    }
+  });
+
+  // Update URL when input changes
+  createEffect(() => {
+    const cellId = inputCellId();
+    const params = new URLSearchParams(window.location.search);
+
+    if (cellId) {
+      params.set('cellId', cellId);
+    } else {
+      params.delete('cellId');
+    }
+
+    const newUrl = `${window.location.pathname}${
+      params.toString() ? '?' + params.toString() : ''
+    }`;
+    window.history.pushState(null, '', newUrl);
+  });
+
+  // Listen for popstate (back/forward navigation)
+  createEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlCellId = params.get('cellId') || '';
+      setInputCellId(urlCellId);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  });
 
   s2WasmModulePromise().then((s2Func) => {
     sets2WasmModule(s2Func);
