@@ -196,7 +196,7 @@ function App() {
     const newUrl = `${window.location.pathname}${
       params.toString() ? '?' + params.toString() : ''
     }`;
-    window.history.replaceState(null, '', newUrl);
+    window.history.pushState(null, '', newUrl);
   });
 
   // Listen for popstate (back/forward navigation)
