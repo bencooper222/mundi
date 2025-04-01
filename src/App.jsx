@@ -123,7 +123,17 @@ function CellInfo(props) {
               props.cellInfoOutput.value.low.lng,
             )}
           />
-
+          <Field
+            label="Centroid LatLng"
+            value={latLngFormatter(
+              (props.cellInfoOutput.value.low.lat +
+                props.cellInfoOutput.value.high.lat) /
+                2,
+              (props.cellInfoOutput.value.low.lng +
+                props.cellInfoOutput.value.high.lng) /
+                2,
+            )}
+          />
           <Field
             label="High LatLng"
             value={latLngFormatter(
