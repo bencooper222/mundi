@@ -36,4 +36,7 @@ input[type='text'] {
   span {
     color: gray;
   }
+  a {
+    color: rgba(10, 10, 200);
+  }
 }

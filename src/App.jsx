@@ -26,13 +26,24 @@ const latLngFormatter = (lat, lng) => {
 };
 
 function Field(props) {
-  return (
-    <div class="label">
-      <span>{props.label}:</span> <strong>{props.value}</strong>
-    </div>
-  );
+  if (props.link) {
+    return (
+      <div class="label">
+        <span>{props.label}: </span>
+        <a href={props.link} target="_blank">
+          <strong>{props.value}</strong>
+        </a>
+      </div>
+    );
+  } else {
+    return (
+      <div class="label">
+        <span>{props.label}: </span>
+        <strong>{props.value}</strong>
+      </div>
+    );
+  }
 }
-
 const geocodeMemoizer = {}; // Probably could use useMemo or something.
 const GeocodeComponent = (props) => {
   const [locationStr] = createResource(
@@ -93,6 +104,20 @@ const copyToClipboardHandler = (data, locationStr) => {
 function CellInfo(props) {
   const [locationStr, setLocationStr] = createSignal(null);
 
+  const centroidLatLng = () => {
+    if (props.cellInfoOutput && props.cellInfoOutput.ok) {
+      return latLngFormatter(
+        (props.cellInfoOutput.value.low.lat +
+          props.cellInfoOutput.value.high.lat) /
+          2,
+        (props.cellInfoOutput.value.low.lng +
+          props.cellInfoOutput.value.high.lng) /
+          2,
+      );
+    }
+    return undefined;
+  };
+
   return (
     <div id="cell-info">
       <Switch>
@@ -125,14 +150,10 @@ function CellInfo(props) {
           />
           <Field
             label="Centroid LatLng"
-            value={latLngFormatter(
-              (props.cellInfoOutput.value.low.lat +
-                props.cellInfoOutput.value.high.lat) /
-                2,
-              (props.cellInfoOutput.value.low.lng +
-                props.cellInfoOutput.value.high.lng) /
-                2,
-            )}
+            link={`https://google.com/maps?q=${encodeURIComponent(
+              centroidLatLng(),
+            )}`}
+            value={centroidLatLng()}
           />
           <Field
             label="High LatLng"
