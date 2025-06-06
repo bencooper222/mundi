@@ -24,7 +24,7 @@ struct S2CellInfo
 
 S2CellInfo GetCellInfo(const std::string token)
 {
-    S2CellId cell_id = S2CellId::FromToken(token);
+    auto cell_id = S2CellId::FromToken(token);
     S2Cell cell(cell_id);
     S2LatLngRect bounds = cell.GetRectBound();
 
