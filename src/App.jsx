@@ -92,17 +92,47 @@ const GeocodeComponent = (props) => {
   );
 };
 
-const copyToClipboardHandler = (data, locationStr) => {
+const copyToClipboardHandler = (data, locationStr, event) => {
   // TODO: consider encoding the full Nominatim JSON response.
   const dataToWrite = {
     ...data,
     reverseGeocode: locationStr ?? null,
   };
-  navigator.clipboard.writeText(JSON.stringify(dataToWrite, null, 2));
+
+  // Use minified JSON if shift key is pressed, otherwise pretty-print
+  const jsonString = event?.shiftKey
+    ? JSON.stringify(dataToWrite)
+    : JSON.stringify(dataToWrite, null, 2);
+
+  navigator.clipboard.writeText(jsonString);
 };
 
 function CellInfo(props) {
   const [locationStr, setLocationStr] = createSignal(null);
+  const [isShiftPressed, setIsShiftPressed] = createSignal(false);
+
+  // Track shift key state
+  createEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Shift') {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.key === 'Shift') {
+        setIsShiftPressed(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  });
 
   const centroidLatLng = () => {
     if (props.cellInfoOutput && props.cellInfoOutput.ok) {
@@ -130,11 +160,15 @@ function CellInfo(props) {
           when={props.cellInfoOutput != undefined && props.cellInfoOutput.ok}
         >
           <button
-            onclick={() =>
-              copyToClipboardHandler(props.cellInfoOutput.value, locationStr())
+            onclick={(event) =>
+              copyToClipboardHandler(
+                props.cellInfoOutput.value,
+                locationStr(),
+                event,
+              )
             }
           >
-            Copy JSON
+            {isShiftPressed() ? 'Copy minified JSON' : 'Copy JSON'}
           </button>
           <Field label="Cell ID" value={props.cellInfoOutput.value.id} />
           <Field
