@@ -5,7 +5,11 @@ import {
   Match,
   createEffect,
   createResource,
+  onMount,
+  onCleanup,
 } from 'solid-js';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const numFormatter = new Intl.NumberFormat();
 const steradiansToDisplayArea = (steradians) => {
@@ -233,6 +237,77 @@ const calculateCellInfo = (s2Module, cellId) => {
   }
 };
 
+function MapComponent(props) {
+  let mapContainer;
+  let map;
+  let cellRectangle;
+
+  onMount(() => {
+    // Initialize the map
+    map = L.map(mapContainer).setView([0, 0], 2);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(map);
+  });
+
+  createEffect(() => {
+    if (!map || !props.cellInfoOutput?.ok) {
+      // Remove existing rectangle if no valid cell
+      if (cellRectangle) {
+        map.removeLayer(cellRectangle);
+        cellRectangle = null;
+      }
+      return;
+    }
+
+    const cellInfo = props.cellInfoOutput.value;
+
+    // Remove existing rectangle if any
+    if (cellRectangle) {
+      map.removeLayer(cellRectangle);
+    }
+
+    // Create bounds from S2 cell corners
+    const bounds = [
+      [cellInfo.low.lat, cellInfo.low.lng],
+      [cellInfo.high.lat, cellInfo.high.lng],
+    ];
+
+    // Draw rectangle
+    cellRectangle = L.rectangle(bounds, {
+      color: '#ff7800',
+      weight: 2,
+      opacity: 0.8,
+      fillOpacity: 0.35,
+      fillColor: '#ff7800',
+    }).addTo(map);
+
+    // Fit map to show the rectangle with some padding
+    map.fitBounds(bounds, { padding: [50, 50] });
+  });
+
+  onCleanup(() => {
+    if (map) {
+      map.remove();
+    }
+  });
+
+  return (
+    <div
+      id="map-container"
+      ref={mapContainer}
+      style={{
+        height: '500px',
+        width: '100%',
+        'border-radius': '8px',
+        border: '1px solid #ccc',
+      }}
+    ></div>
+  );
+}
+
 function App() {
   // Initialize cellId from URL on mount
   const params = new URLSearchParams(window.location.search);
@@ -287,16 +362,22 @@ function App() {
   });
 
   return (
-    <div>
-      <input
-        type="text"
-        value={inputCellId()}
-        onInput={(e) => setInputCellId(e.currentTarget.value)}
-        placeholder="Enter S2 cell ID"
-        autofocus
-      />
+    <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
+      <div style={{ flex: '1', 'min-width': '300px' }}>
+        <input
+          type="text"
+          value={inputCellId()}
+          onInput={(e) => setInputCellId(e.currentTarget.value)}
+          placeholder="Enter S2 cell ID"
+          autofocus
+        />
 
-      <CellInfo cellInfoOutput={cellInfoOutput()} />
+        <CellInfo cellInfoOutput={cellInfoOutput()} />
+      </div>
+
+      <div style={{ flex: '1', 'min-width': '300px' }}>
+        <MapComponent cellInfoOutput={cellInfoOutput()} />
+      </div>
     </div>
   );
 }

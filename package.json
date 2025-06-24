@@ -15,6 +15,7 @@
     "vite-plugin-solid": "^2.8.2"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "solid-js": "^1.8.11"
   }
 }

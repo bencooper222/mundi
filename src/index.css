@@ -23,8 +23,9 @@ input[type='text'] {
   border: none;
   outline: none;
   padding: 8px;
-  width: 90%;
-  font-size: min(64px, 8vw);
+  width: 100%;
+  font-size: min(48px, 6vw);
+  box-sizing: border-box;
 }
 
 #cell-info {
@@ -39,4 +40,30 @@ input[type='text'] {
   a {
     color: rgba(10, 10, 200);
   }
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  #root > div {
+    flex-direction: column !important;
+  }
+
+  input[type='text'] {
+    font-size: min(32px, 8vw);
+  }
+}
+
+/* Button styles */
+button {
+  padding: 8px 16px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #e0e0e0;
 }
