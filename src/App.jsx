@@ -234,23 +234,22 @@ const calculateCellInfo = (s2Module, cellId) => {
 };
 
 function App() {
+  // Initialize cellId from URL on mount
+  const params = new URLSearchParams(window.location.search);
+  const initialCellId = params.get('cellId') || '';
+
   const [s2WasmModule, sets2WasmModule] = createSignal(null);
-  const [inputCellId, setInputCellId] = createSignal('');
+  const [inputCellId, setInputCellId] = createSignal(initialCellId);
   const [cellInfoOutput, setCellInfoOutput] = createSignal(null);
 
-  // Initialize from URL
-  createEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlCellId = params.get('cellId');
-    if (urlCellId && urlCellId !== inputCellId()) {
-      setInputCellId(urlCellId);
-    }
-  });
-
-  // Update URL when input changes
+  // Update URL when input changes (but not on initial mount)
   createEffect(() => {
     const cellId = inputCellId();
     const params = new URLSearchParams(window.location.search);
+    const currentUrlCellId = params.get('cellId') || '';
+
+    // Only update history if the value actually changed from what's in the URL
+    if (cellId === currentUrlCellId) return;
 
     if (cellId) {
       params.set('cellId', cellId);
