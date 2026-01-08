@@ -19,13 +19,96 @@ code {
   text-align: left;
 }
 
-input[type='text'] {
+/* Floating label input container */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper input[type='text'] {
   border: none;
   outline: none;
   padding: 8px;
+  padding-top: 24px;
   width: 100%;
   font-size: min(48px, 6vw);
   box-sizing: border-box;
+}
+
+.input-wrapper .floating-label {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: min(48px, 6vw);
+  color: #999;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+  transform-origin: left center;
+}
+
+.input-wrapper.has-value .floating-label {
+  top: 4px;
+  transform: translateY(0);
+  font-size: 12px;
+  color: #666;
+}
+
+/* Lat/Lng row layout */
+.latlng-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  align-items: flex-end;
+}
+
+.input-wrapper-secondary {
+  flex: 1;
+}
+
+.input-wrapper-secondary input[type='text'] {
+  font-size: 18px;
+  padding-top: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.input-wrapper-secondary .floating-label {
+  font-size: 18px;
+}
+
+.input-wrapper-secondary.has-value .floating-label {
+  font-size: 11px;
+}
+
+.input-wrapper-level {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.input-wrapper-level input[type='number'] {
+  border: none;
+  outline: none;
+  padding: 8px;
+  padding-top: 20px;
+  width: 100%;
+  font-size: 18px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #ddd;
+  -moz-appearance: textfield;
+}
+
+.input-wrapper-level input[type='number']::-webkit-outer-spin-button,
+.input-wrapper-level input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-wrapper-level .floating-label {
+  font-size: 18px;
+}
+
+.input-wrapper-level.has-value .floating-label {
+  font-size: 11px;
 }
 
 #cell-info {
@@ -48,8 +131,23 @@ input[type='text'] {
     flex-direction: column !important;
   }
 
-  input[type='text'] {
+  .input-wrapper input[type='text'] {
     font-size: min(32px, 8vw);
+  }
+
+  .input-wrapper .floating-label {
+    font-size: min(32px, 8vw);
+  }
+
+  .input-wrapper-secondary input[type='text'],
+  .input-wrapper-secondary .floating-label,
+  .input-wrapper-level input[type='number'],
+  .input-wrapper-level .floating-label {
+    font-size: 16px;
+  }
+
+  .input-wrapper-level {
+    width: 70px;
   }
 }
 

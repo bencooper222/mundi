@@ -316,6 +316,8 @@ function App() {
   const [s2WasmModule, sets2WasmModule] = createSignal(null);
   const [inputCellId, setInputCellId] = createSignal(initialCellId);
   const [cellInfoOutput, setCellInfoOutput] = createSignal(null);
+  const [latLngInput, setLatLngInput] = createSignal('');
+  const [level, setLevel] = createSignal(13);
 
   // Update URL when input changes (but not on initial mount)
   createEffect(() => {
@@ -361,16 +363,61 @@ function App() {
     setCellInfoOutput(cellInfo);
   });
 
+  // Convert lat,lng to S2 token when input changes.
+  createEffect(() => {
+    const s2Module = s2WasmModule();
+    const input = latLngInput().trim();
+    if (!s2Module || !input) return;
+
+    // Parse lat,lng from input (supports "lat,lng" or "lat, lng").
+    const parts = input.split(',').map((s) => s.trim());
+    if (parts.length !== 2) return;
+
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    try {
+      const token = s2Module.GetS2TokenFromLatLng(lat, lng, level());
+      setInputCellId(token);
+    } catch (error) {
+      console.error('Error converting lat/lng to S2 token:', error);
+    }
+  });
+
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
       <div style={{ flex: '1', 'min-width': '300px' }}>
-        <input
-          type="text"
-          value={inputCellId()}
-          onInput={(e) => setInputCellId(e.currentTarget.value)}
-          placeholder="Enter S2 cell ID"
-          autofocus
-        />
+        <div class={`input-wrapper ${inputCellId() ? 'has-value' : ''}`}>
+          <label class="floating-label">S2 cell ID</label>
+          <input
+            type="text"
+            value={inputCellId()}
+            onInput={(e) => setInputCellId(e.currentTarget.value)}
+            autofocus
+          />
+        </div>
+
+        <div class="latlng-row">
+          <div class={`input-wrapper input-wrapper-secondary ${latLngInput() ? 'has-value' : ''}`}>
+            <label class="floating-label">Lat, Lng</label>
+            <input
+              type="text"
+              value={latLngInput()}
+              onInput={(e) => setLatLngInput(e.currentTarget.value)}
+            />
+          </div>
+          <div class={`input-wrapper input-wrapper-level has-value`}>
+            <label class="floating-label">Level</label>
+            <input
+              type="number"
+              min="0"
+              max="30"
+              value={level()}
+              onInput={(e) => setLevel(parseInt(e.currentTarget.value) || 13)}
+            />
+          </div>
+        </div>
 
         <CellInfo cellInfoOutput={cellInfoOutput()} />
       </div>
