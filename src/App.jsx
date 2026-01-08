@@ -241,7 +241,10 @@ const calculateCellInfo = (s2Module, cellId) => {
 // Parses a "lat, lng" string and returns { lat, lng } if valid, or null otherwise.
 const parseLatLng = (input) => {
   if (!input) return null;
-  const parts = input.trim().split(',').map((s) => s.trim());
+  const parts = input
+    .trim()
+    .split(',')
+    .map((s) => s.trim());
   if (parts.length !== 2) return null;
 
   const lat = parseFloat(parts[0]);
@@ -317,9 +320,7 @@ function MapComponent(props) {
     const { lat, lng } = props.latLng;
 
     // Create marker with a popup showing the coordinates.
-    latLngMarker = L.marker([lat, lng])
-      .bindPopup(`${lat}, ${lng}`)
-      .addTo(map);
+    latLngMarker = L.marker([lat, lng]).bindPopup(`${lat}, ${lng}`).addTo(map);
   });
 
   onCleanup(() => {
@@ -380,7 +381,11 @@ function App() {
     if (parsed && s2Module) {
       // Input is lat,lng - convert to S2 token.
       try {
-        return s2Module.GetS2TokenFromLatLng(parsed.lat, parsed.lng, effectiveLevel());
+        return s2Module.GetS2TokenFromLatLng(
+          parsed.lat,
+          parsed.lng,
+          effectiveLevel(),
+        );
       } catch (error) {
         console.error('Error converting lat/lng to S2 token:', error);
         return null;
@@ -475,7 +480,10 @@ function App() {
       </div>
 
       <div style={{ flex: '1', 'min-width': '300px' }}>
-        <MapComponent cellInfoOutput={cellInfoOutput()} latLng={parsedLatLng()} />
+        <MapComponent
+          cellInfoOutput={cellInfoOutput()}
+          latLng={parsedLatLng()}
+        />
       </div>
     </div>
   );
