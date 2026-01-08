@@ -13,6 +13,7 @@ struct LatLng
     double lat;
     double lng;
 };
+
 struct S2CellInfo
 {
     std::string id;
@@ -45,6 +46,21 @@ S2CellInfo GetCellInfo(const std::string token)
     return cell_info;
 }
 
+// Converts a latitude/longitude pair at a given S2 level to an S2 token string.
+std::string GetS2TokenFromLatLng(double lat, double lng, size_t level)
+{
+    if(level < 0) {
+        throw std::invalid_argument("Level must be greater than 0");
+    }
+    if(level > S2CellId::kMaxLevel) {
+        throw std::invalid_argument("Level must be less than " + std::to_string(S2CellId::kMaxLevel));
+    }
+    
+    S2LatLng latlng = S2LatLng::FromDegrees(lat, lng);
+    S2CellId cell_id = S2CellId(latlng).parent(static_cast<int>(level));
+    return cell_id.ToToken();
+}
+
 EMSCRIPTEN_BINDINGS(get_cell_info)
 {
     value_object<LatLng>("LatLng")
@@ -59,4 +75,5 @@ EMSCRIPTEN_BINDINGS(get_cell_info)
         .field("zoomLevel", &S2CellInfo::zoom_level);
 
     function("GetCellInfo", &GetCellInfo);
+    function("GetS2TokenFromLatLng", &GetS2TokenFromLatLng);
 }

@@ -3,6 +3,7 @@ import {
   createSignal,
   Switch,
   Match,
+  Show,
   createEffect,
   createResource,
   onMount,
@@ -10,6 +11,17 @@ import {
 } from 'solid-js';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix Leaflet's default icon paths for bundled apps.
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 const numFormatter = new Intl.NumberFormat();
 const steradiansToDisplayArea = (steradians) => {
@@ -174,7 +186,7 @@ function CellInfo(props) {
           >
             {isShiftPressed() ? 'Copy minified JSON' : 'Copy JSON'}
           </button>
-          <Field label="Cell ID" value={props.cellInfoOutput.value.id} />
+          <Field label="Cell Token" value={props.cellInfoOutput.value.id} />
           <Field
             label="Zoom Level"
             value={props.cellInfoOutput.value.zoomLevel}
@@ -237,24 +249,42 @@ const calculateCellInfo = (s2Module, cellId) => {
   }
 };
 
+// Parses a "lat, lng" string and returns { lat, lng } if valid, or null otherwise.
+const parseLatLng = (input) => {
+  if (!input) return null;
+  const parts = input
+    .trim()
+    .split(',')
+    .map((s) => s.trim());
+  if (parts.length !== 2) return null;
+
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+
+  return { lat, lng };
+};
+
 function MapComponent(props) {
   let mapContainer;
   let map;
   let cellRectangle;
+  let latLngMarker;
 
   onMount(() => {
-    // Initialize the map
+    // Initialize the map.
     map = L.map(mapContainer).setView([0, 0], 2);
 
-    // Add OpenStreetMap tiles
+    // Add OpenStreetMap tiles.
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
     }).addTo(map);
   });
 
+  // Effect for the cell rectangle.
   createEffect(() => {
     if (!map || !props.cellInfoOutput?.ok) {
-      // Remove existing rectangle if no valid cell
+      // Remove existing rectangle if no valid cell.
       if (cellRectangle) {
         map.removeLayer(cellRectangle);
         cellRectangle = null;
@@ -264,18 +294,18 @@ function MapComponent(props) {
 
     const cellInfo = props.cellInfoOutput.value;
 
-    // Remove existing rectangle if any
+    // Remove existing rectangle if any.
     if (cellRectangle) {
       map.removeLayer(cellRectangle);
     }
 
-    // Create bounds from S2 cell corners
+    // Create bounds from S2 cell corners.
     const bounds = [
       [cellInfo.low.lat, cellInfo.low.lng],
       [cellInfo.high.lat, cellInfo.high.lng],
     ];
 
-    // Draw rectangle
+    // Draw rectangle.
     cellRectangle = L.rectangle(bounds, {
       color: '#ff7800',
       weight: 2,
@@ -284,8 +314,24 @@ function MapComponent(props) {
       fillColor: '#ff7800',
     }).addTo(map);
 
-    // Fit map to show the rectangle with some padding
+    // Fit map to show the rectangle with some padding.
     map.fitBounds(bounds, { padding: [50, 50] });
+  });
+
+  // Effect for the lat/lng marker.
+  createEffect(() => {
+    // Remove existing marker if any.
+    if (latLngMarker) {
+      map.removeLayer(latLngMarker);
+      latLngMarker = null;
+    }
+
+    if (!map || !props.latLng) return;
+
+    const { lat, lng } = props.latLng;
+
+    // Create marker with a popup showing the coordinates.
+    latLngMarker = L.marker([lat, lng]).bindPopup(`${lat}, ${lng}`).addTo(map);
   });
 
   onCleanup(() => {
@@ -309,27 +355,71 @@ function MapComponent(props) {
 }
 
 function App() {
-  // Initialize cellId from URL on mount
+  // Initialize input from URL on mount.
   const params = new URLSearchParams(window.location.search);
-  const initialCellId = params.get('cellId') || '';
+
+  // Backwards compatibility: redirect ?cellId= to ?q=
+  const legacyCellId = params.get('cellId');
+  if (legacyCellId) {
+    params.delete('cellId');
+    params.set('q', legacyCellId);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+  }
+
+  const initialInput = params.get('q') || '';
 
   const [s2WasmModule, sets2WasmModule] = createSignal(null);
-  const [inputCellId, setInputCellId] = createSignal(initialCellId);
+  const [input, setInput] = createSignal(initialInput);
   const [cellInfoOutput, setCellInfoOutput] = createSignal(null);
+  const [levelInput, setLevelInput] = createSignal('');
 
-  // Update URL when input changes (but not on initial mount)
+  // Derived: check if input is a lat,lng.
+  const parsedLatLng = () => parseLatLng(input());
+  const isLatLngMode = () => parsedLatLng() !== null;
+
+  // Derived: effective level (defaults to 13 if empty).
+  const effectiveLevel = () => {
+    const parsed = parseInt(levelInput());
+    return isNaN(parsed) ? 13 : parsed;
+  };
+
+  // Derived: compute the effective cell ID.
+  const effectiveCellId = () => {
+    const s2Module = s2WasmModule();
+    const parsed = parsedLatLng();
+
+    if (parsed && s2Module) {
+      // Input is lat,lng - convert to S2 token.
+      try {
+        return s2Module.GetS2TokenFromLatLng(
+          parsed.lat,
+          parsed.lng,
+          effectiveLevel(),
+        );
+      } catch (error) {
+        console.error('Error converting lat/lng to S2 token:', error);
+        return null;
+      }
+    }
+
+    // Input is treated as S2 token directly.
+    return input() || null;
+  };
+
+  // Update URL when input changes (but not on initial mount).
   createEffect(() => {
-    const cellId = inputCellId();
+    const currentInput = input();
     const params = new URLSearchParams(window.location.search);
-    const currentUrlCellId = params.get('cellId') || '';
+    const currentUrlInput = params.get('q') || '';
 
-    // Only update history if the value actually changed from what's in the URL
-    if (cellId === currentUrlCellId) return;
+    // Only update history if the value actually changed from what's in the URL.
+    if (currentInput === currentUrlInput) return;
 
-    if (cellId) {
-      params.set('cellId', cellId);
+    if (currentInput) {
+      params.set('q', currentInput);
     } else {
-      params.delete('cellId');
+      params.delete('q');
     }
 
     const newUrl = `${window.location.pathname}${
@@ -338,12 +428,12 @@ function App() {
     window.history.pushState(null, '', newUrl);
   });
 
-  // Listen for popstate (back/forward navigation)
+  // Listen for popstate (back/forward navigation).
   createEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const urlCellId = params.get('cellId') || '';
-      setInputCellId(urlCellId);
+      const urlInput = params.get('q') || '';
+      setInput(urlInput);
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -355,28 +445,56 @@ function App() {
   });
 
   createEffect(() => {
-    const cellId = inputCellId();
+    const cellId = effectiveCellId();
     const s2Module = s2WasmModule();
     const cellInfo = calculateCellInfo(s2Module, cellId);
     setCellInfoOutput(cellInfo);
   });
 
+  // Dynamic font size based on input length.
+  const inputFontSize = () => {
+    const len = input().length;
+    if (len <= 12) return 'min(48px, 6vw)';
+    if (len <= 20) return 'min(36px, 5vw)';
+    if (len <= 30) return 'min(28px, 4vw)';
+    return 'min(22px, 3.5vw)';
+  };
+
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
       <div style={{ flex: '1', 'min-width': '300px' }}>
-        <input
-          type="text"
-          value={inputCellId()}
-          onInput={(e) => setInputCellId(e.currentTarget.value)}
-          placeholder="Enter S2 cell ID"
-          autofocus
-        />
+        <div class={`input-wrapper ${input() ? 'has-value' : ''}`}>
+          <label class="floating-label">S2 token or lat,lng</label>
+          <input
+            type="text"
+            value={input()}
+            onInput={(e) => setInput(e.currentTarget.value)}
+            style={{ 'font-size': inputFontSize() }}
+            autofocus
+          />
+        </div>
+        <Show when={isLatLngMode()}>
+          <div class="input-wrapper input-wrapper-level has-value">
+            <label class="floating-label">S2 cell level</label>
+            <input
+              type="number"
+              min="0"
+              max="30"
+              value={levelInput()}
+              placeholder="13"
+              onInput={(e) => setLevelInput(e.currentTarget.value)}
+            />
+          </div>
+        </Show>
 
         <CellInfo cellInfoOutput={cellInfoOutput()} />
       </div>
 
       <div style={{ flex: '1', 'min-width': '300px' }}>
-        <MapComponent cellInfoOutput={cellInfoOutput()} />
+        <MapComponent
+          cellInfoOutput={cellInfoOutput()}
+          latLng={parsedLatLng()}
+        />
       </div>
     </div>
   );
