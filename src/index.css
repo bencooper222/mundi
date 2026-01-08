@@ -54,35 +54,21 @@ code {
   color: #666;
 }
 
-/* Lat/Lng row layout */
-.latlng-row {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-  align-items: flex-end;
-}
-
-.input-wrapper-secondary {
-  flex: 1;
-}
-
-.input-wrapper-secondary input[type='text'] {
-  font-size: 18px;
-  padding-top: 20px;
-  border-bottom: 1px solid #ddd;
-}
-
-.input-wrapper-secondary .floating-label {
-  font-size: 18px;
-}
-
-.input-wrapper-secondary.has-value .floating-label {
-  font-size: 11px;
-}
-
 .input-wrapper-level {
-  width: 80px;
-  flex-shrink: 0;
+  margin-top: 8px;
+  width: auto;
+  animation: slide-in 0.25s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .input-wrapper-level input[type='number'] {
@@ -93,7 +79,6 @@ code {
   width: 100%;
   font-size: 18px;
   box-sizing: border-box;
-  border-bottom: 1px solid #ddd;
   -moz-appearance: textfield;
 }
 
@@ -139,15 +124,9 @@ code {
     font-size: min(32px, 8vw);
   }
 
-  .input-wrapper-secondary input[type='text'],
-  .input-wrapper-secondary .floating-label,
   .input-wrapper-level input[type='number'],
   .input-wrapper-level .floating-label {
     font-size: 16px;
-  }
-
-  .input-wrapper-level {
-    width: 70px;
   }
 }
 
