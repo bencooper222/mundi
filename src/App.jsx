@@ -127,7 +127,8 @@ function CellInfo(props) {
   const [locationStr, setLocationStr] = createSignal(null);
   const [isShiftPressed, setIsShiftPressed] = createSignal(false);
 
-  // Track shift key state
+  // Track shift key state. We reset to false on blur/visibility change to avoid
+  // stale state when the user switches tabs while holding shift.
   createEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Shift') {
@@ -141,12 +142,18 @@ function CellInfo(props) {
       }
     };
 
+    const handleBlur = () => {
+      setIsShiftPressed(false);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
   });
 
