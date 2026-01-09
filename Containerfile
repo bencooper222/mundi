@@ -1,5 +1,7 @@
 FROM silkeh/clang:18-bookworm AS builder
 
+LABEL org.opencontainers.image.source=https://github.com/bencooper222/mundi
+
 WORKDIR /mundi
 
 RUN apt-get update && apt-get install -y cmake curl unzip
