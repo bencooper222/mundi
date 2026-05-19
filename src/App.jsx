@@ -85,14 +85,21 @@ const GeocodeComponent = (props) => {
       if (data.error) {
         locationStr = 'Unknown';
       } else if (data.address) {
-        const cityCounty = data.address.city ?? data.address.county ?? null;
-        locationStr =
-          cityCounty === null
-            ? data.address.state
-            : `${cityCounty}, ${data.address.state}`;
+        const cityCounty =
+          data.address.city ??
+          data.address.town ??
+          data.address.village ??
+          data.address.county ??
+          null;
+        const state =
+          data.address.state ?? data.address.province ?? null;
+        const parts = [cityCounty, state].filter(Boolean);
+        locationStr = parts.join(', ');
 
         if (data.address.country_code !== 'us') {
-          locationStr += `, ${data.address.country}`;
+          locationStr = locationStr
+            ? `${locationStr}, ${data.address.country}`
+            : data.address.country;
         }
       }
       geocodeMemoizer[memoizeKey] = locationStr;
